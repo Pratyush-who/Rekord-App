@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   flutter_svg: ^2.0.7 
   image_picker: ^0.8.7+4
+  fl_chart: ^0.65.0
+  video_player: ^2.8.2 
 
 dev_dependencies:
   flutter_test:
@@ -20,4 +22,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icons/
+    - assets/

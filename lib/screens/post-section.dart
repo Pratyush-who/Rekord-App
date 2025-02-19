@@ -12,14 +12,28 @@ class PostSection extends StatefulWidget {
 class PostSectionState extends State<PostSection> {
   List<Map<String, dynamic>> posts = [
     {
-      "text": "What a game! 🏀🔥 #Basketball #SportsLife",
+      "text": "What a hackathon! We won CODESEVA 🧑‍💻👾 #Hackathon #CodeSeva",
       "image": "assets/post1.jpg",
       "time": DateTime.now().subtract(Duration(hours: 2)),
+      "isAsset": true,
     },
     {
       "text": "Just finished a 10k run! 🏃‍♂️💨 #Fitness #Running",
-      "image": "assets/post2.jpg",
+      "image": "assets/post2.png",
       "time": DateTime.now().subtract(Duration(days: 1)),
+      "isAsset": true,
+    },
+    {
+      "text": "Incredible goal by my favorite player! ⚽️🔥 #Football",
+      "image": "assets/post3.webp",
+      "time": DateTime.now().subtract(Duration(minutes: 45)),
+      "isAsset": true,
+    },
+    {
+      "text": "Amazing rally in today's tennis match! 🎾💪 #Tennis",
+      "image": "assets/post4.avif",
+      "time": DateTime.now().subtract(Duration(hours: 3)),
+      "isAsset": true,
     },
   ];
 
@@ -28,7 +42,8 @@ class PostSectionState extends State<PostSection> {
       posts.insert(0, {
         "text": text,
         "image": imagePath,
-        "time": DateTime.now(),
+        "time": DateTime.now(), // Add current timestamp
+        "isAsset": false, // Gallery images are not assets
       });
     });
   }
@@ -37,7 +52,7 @@ class PostSectionState extends State<PostSection> {
   Widget build(BuildContext context) {
     return ListView.builder(
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: BouncingScrollPhysics(),
       itemCount: posts.length,
       itemBuilder: (context, index) {
         final post = posts[index];
@@ -56,13 +71,12 @@ class PostSectionState extends State<PostSection> {
               // Post Header
               ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: AssetImage("assets/user_profile.jpg"),
+                  backgroundImage: AssetImage("assets/logo.avif"),
                 ),
                 title: Text(
                   "SportsFan123",
                   style: TextStyle(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.bold),
+                      color: AppColors.white, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   timeAgo,
@@ -84,12 +98,19 @@ class PostSectionState extends State<PostSection> {
                 ),
               // Post Image
               if (post["image"] != null)
-                Image.file(
-                  File(post["image"]),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 300,
-                ),
+                post["isAsset"]
+                    ? Image.asset(
+                        post["image"],
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: 300,
+                      )
+                    : Image.file(
+                        File(post["image"]),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: 300,
+                      ),
               // Post Actions
               Padding(
                 padding: const EdgeInsets.all(8.0),

@@ -28,7 +28,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   void _createPost() {
     final text = _textController.text.trim();
     if (text.isNotEmpty || _imagePath != null) {
-      widget.onPostCreated(text, _imagePath);
+      widget.onPostCreated(text, _imagePath); // Call the callback
       Navigator.pop(context); // Close the dialog
     }
   }

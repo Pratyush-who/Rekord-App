@@ -2,36 +2,52 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 
 class CustomBottomBar extends StatelessWidget {
-  final Function() onAddPost;
+  final int currentIndex;
+  final Function(int) onTabTapped;
 
-  const CustomBottomBar({required this.onAddPost});
+  const CustomBottomBar({
+    required this.currentIndex,
+    required this.onTabTapped,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
-      color: AppColors.black,
+      shape: const CircularNotchedRectangle(), // Creates a notch
+      notchMargin: 10.0,
+      color: AppColors.black.withOpacity(0.9), // Slight transparency
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            icon: Icon(Icons.home, color: AppColors.white),
-            onPressed: () {},
+            icon: Icon(
+              Icons.home,
+              color: currentIndex == 0 ? AppColors.primary : AppColors.white,
+            ),
+            onPressed: () => onTabTapped(0),
           ),
           IconButton(
-            icon: Icon(Icons.search, color: AppColors.white),
-            onPressed: () {},
+            icon: Icon(
+              Icons.search,
+              color: currentIndex == 1 ? AppColors.primary : AppColors.white,
+            ),
+            onPressed: () => onTabTapped(1),
+          ),
+          SizedBox(width: 40), // Empty space
+          IconButton(
+            icon: Icon(
+              Icons.notifications,
+              color: currentIndex == 3 ? AppColors.primary : AppColors.white,
+            ),
+            onPressed: () => onTabTapped(3),
           ),
           IconButton(
-            icon: Icon(Icons.add, color: AppColors.white),
-            onPressed: onAddPost, // Trigger the add post function
-          ),
-          IconButton(
-            icon: Icon(Icons.music_video_sharp, color: AppColors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.person, color: AppColors.white),
-            onPressed: () {},
+            icon: Icon(
+              Icons.person,
+              color: currentIndex == 4 ? AppColors.primary : AppColors.white,
+            ),
+            onPressed: () => onTabTapped(4),
           ),
         ],
       ),

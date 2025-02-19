@@ -1,0 +1,2 @@
+F:/Pratyush/AppDev/rekord/android/app/.cxx/Debug/41511p6l/x86/CMakeFiles/edit_cache.dir
+F:/Pratyush/AppDev/rekord/android/app/.cxx/Debug/41511p6l/x86/CMakeFiles/rebuild_cache.dir
