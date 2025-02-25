@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       onGenerateRoute: AppRouter.generateRoute,
-      initialRoute: '/', // Start with LoginScreen
+      initialRoute: '/',
     );
   }
 }

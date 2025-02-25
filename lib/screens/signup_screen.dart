@@ -318,40 +318,18 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _nameController,
                       label: "Full Name",
                       icon: Icons.person,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your full name';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _usernameController,
                       label: "Username",
                       icon: Icons.alternate_email,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a username';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _emailController,
                       label: "Email",
                       icon: Icons.email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -359,27 +337,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       label: "Password",
                       icon: Icons.lock,
                       isPassword: true,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
-                        } else if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _phoneController,
                       label: "Phone Number",
                       icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        return null;
-                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -417,12 +380,6 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ? DateFormat('dd/MM/yyyy')
                                       .format(_selectedDate!)
                                   : ''),
-                          validator: (value) {
-                            if (_selectedDate == null) {
-                              return 'Please select your date of birth';
-                            }
-                            return null;
-                          },
                         ),
                       ),
                     ),
@@ -435,24 +392,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _nationalityController,
                       label: "Nationality",
                       icon: Icons.flag,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your nationality';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _locationController,
                       label: "Current Location",
                       icon: Icons.location_on,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your current location';
-                        }
-                        return null;
-                      },
                     ),
 
                     const SizedBox(height: 24),
@@ -464,12 +409,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         controller: _careerController,
                         label: "Sports Career",
                         icon: Icons.sports_soccer,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please provide your sports career details';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -477,10 +416,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         label: "Athlete Bio",
                         icon: Icons.description,
                         maxLines: 3,
-                        validator: (value) {
-                          // Bio can be optional
-                          return null;
-                        },
                       ),
                     ],
 
@@ -491,12 +426,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         controller: _interestsController,
                         label: "Favorite Sports",
                         icon: Icons.sports_baseball,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your favorite sports';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -504,10 +433,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         label: "Fan Bio",
                         icon: Icons.description,
                         maxLines: 3,
-                        validator: (value) {
-                          // Bio can be optional
-                          return null;
-                        },
                       ),
                     ],
 
@@ -538,7 +463,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
                     // Login Link
                     TextButton(
                       onPressed: () =>
