@@ -41,9 +41,11 @@ class PostSectionState extends State<PostSection> {
     setState(() {
       posts.insert(0, {
         "text": text,
-        "image": imagePath,
-        "time": DateTime.now(), // Add current timestamp
-        "isAsset": false, // Gallery images are not assets
+        "image": imagePath, // This can be null or a valid path
+        "time": DateTime.now(),
+        "isAsset": imagePath == null
+            ? true
+            : false, // Check if it's an asset or a gallery image
       });
     });
   }
@@ -106,11 +108,12 @@ class PostSectionState extends State<PostSection> {
                         height: 300,
                       )
                     : Image.file(
-                        File(post["image"]),
+                        File(post["image"]), // Ensure File is used properly
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: 300,
                       ),
+
               // Post Actions
               Padding(
                 padding: const EdgeInsets.all(8.0),

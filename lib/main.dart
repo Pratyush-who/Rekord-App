@@ -9,13 +9,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false, 
       title: 'Rekord',
       theme: ThemeData(
         primaryColor: Colors.black,
         scaffoldBackgroundColor: Colors.black,
       ),
-      onGenerateRoute: AppRouter.generateRoute, // Use AppRouter for navigation
+      onGenerateRoute: AppRouter.generateRoute,
       initialRoute: '/', // Start with LoginScreen
     );
   }
