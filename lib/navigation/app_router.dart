@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:rekord/screens/athelete_home.dart';
+import 'package:rekord/screens/edit-profile.dart';
 import 'package:rekord/screens/explore_screen.dart';
 import 'package:rekord/screens/fan_home.dart';
 import 'package:rekord/screens/notification_screen.dart';
 import 'package:rekord/screens/login_screen.dart';
 import 'package:rekord/screens/signup_screen.dart';
 import 'package:rekord/screens/profile_screen.dart';
+import 'package:rekord/screens/test_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -17,6 +19,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => LoginScreen());
       case '/signup':
         return MaterialPageRoute(builder: (_) => SignupScreen());
+      case '/postspage':
+        return MaterialPageRoute(builder: (_) => PostsPage());
       case '/athlete_home':
         return MaterialPageRoute(
           builder: (_) => AthleteHomeScreen(
@@ -33,8 +37,12 @@ class AppRouter {
       //   return MaterialPageRoute(builder: (_) => SearchScreen());
       // case '/notifications':
       //   return MaterialPageRoute(builder: (_) => NotificationsScreen());
-      // case '/profile':
-      //   return MaterialPageRoute(builder: (_) => ProfileScreen());
+      case '/profile':
+        return MaterialPageRoute(builder: (_) => ProfilePage());
+      case '/edit-profile':
+        return MaterialPageRoute(builder: (_) => EditProfileScreen());
+      case '/login':
+        return MaterialPageRoute(builder: (_) => LoginScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

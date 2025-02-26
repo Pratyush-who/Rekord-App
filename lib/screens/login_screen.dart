@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum UserType { athlete, regularUser }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
-
+  
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -17,22 +20,115 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  
+  // Loading state
+  bool _isLoading = false;
+  
   // Colors
   final Color primaryRed = const Color(0xFFEE3124);
   final Color primaryOrange = const Color(0xFFFF7809);
 
-  void _login(BuildContext context) {
-    // Route to the appropriate home page based on selected user type
-    if (_userType == UserType.athlete) {
-      Navigator.pushReplacementNamed(context, '/athlete_home',
-          arguments: {'userType': 'athlete'});
-    } else {
-      Navigator.pushReplacementNamed(context, '/fan_home',
-          arguments: {'userType': 'user'});
+  // Function to make API request for athlete login and save data
+  Future<void> _createAthlete(String email, String password) async {
+    // Show loading indicator
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.1.61:3000/api/loginAthlete'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'email': email,
+          'password': password,
+        }),
+      );
+      
+      // Handle response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Parse the response
+        final responseData = jsonDecode(response.body);
+        
+        // Save to local storage
+        await _saveUserData(responseData);
+        
+        // Success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Athlete logged in successfully')),
+        );
+        
+        // Navigate to athlete home
+        Navigator.pushReplacementNamed(context, '/athlete_home',
+            arguments: {'userType': 'athlete', 'userData': responseData});
+      } else {
+        // Error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to login: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      // Network or other error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      // Hide loading indicator
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
-
+  
+  // Save user data to local storage
+  Future<void> _saveUserData(dynamic userData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Save the entire response as a JSON string
+      await prefs.setString('userData', jsonEncode(userData));
+      
+      // Optionally save individual fields for easier access
+      if (userData is Map) {
+        if (userData.containsKey('token')) {
+          await prefs.setString('token', userData['token']);
+        }
+        
+        if (userData.containsKey('userId')) {
+          await prefs.setString('userId', userData['userId']);
+        }
+        
+        if (userData.containsKey('email')) {
+          await prefs.setString('email', userData['email']);
+        }
+        
+        // Set login status
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('userType', 'athlete');
+      }
+      
+      print('User data saved to local storage');
+    } catch (e) {
+      print('Error saving to local storage: $e');
+    }
+  }
+  
+  void _login(BuildContext context) {
+    // Validate form first
+    if (_formKey.currentState?.validate() ?? false) {
+      // If athlete is selected and we're trying to login
+      if (_userType == UserType.athlete) {
+        _createAthlete(_emailController.text, _passwordController.text);
+      } else {
+        // Regular user login flow
+        Navigator.pushReplacementNamed(context, '/fan_home',
+            arguments: {'userType': 'user'});
+      }
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       "Welcome Back!",
                       textAlign: TextAlign.center,
@@ -182,7 +277,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-
                     Text(
                       _userType == UserType.athlete
                           ? "Login to Your Athlete Account"
@@ -194,12 +288,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
-
                     // Email Field
                     _buildTextField(
                       controller: _emailController,
                       label: "Email",
                       icon: Icons.email,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 20),
                     
@@ -209,8 +311,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: "Password",
                       icon: Icons.lock,
                       isPassword: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
                     ),
-
                     // Forgot Password Link
                     Align(
                       alignment: Alignment.centerRight,
@@ -227,37 +337,41 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     
                     const SizedBox(height: 30),
-
                     // Login Button
-                    ElevatedButton(
-                      onPressed: () => _login(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryRed,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: Text(
-                        _userType == UserType.athlete
-                            ? "LOGIN AS ATHLETE"
-                            : "LOGIN AS FAN",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-
+                    _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: primaryRed,
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: () => _login(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryRed,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 5,
+                            ),
+                            child: Text(
+                              _userType == UserType.athlete
+                                  ? "LOGIN AS ATHLETE"
+                                  : "LOGIN AS FAN",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
                     const SizedBox(height: 20),
                     
                     // Sign Up Link
                     TextButton(
                       onPressed: () =>
-                          Navigator.pushReplacementNamed(context, '/signup'),
+                          Navigator.pushReplacementNamed(context, '/postspage'),
                       child: RichText(
                         text: TextSpan(
                           children: [
@@ -319,11 +433,13 @@ class _LoginScreenState extends State<LoginScreen> {
     required String label,
     required IconData icon,
     bool isPassword = false,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
       style: const TextStyle(color: Colors.white),
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.white70),

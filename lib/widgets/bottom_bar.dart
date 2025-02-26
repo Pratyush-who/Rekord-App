@@ -20,6 +20,7 @@ class CustomBottomBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          // Home Button (Index 0)
           IconButton(
             icon: Icon(
               Icons.home,
@@ -27,6 +28,7 @@ class CustomBottomBar extends StatelessWidget {
             ),
             onPressed: () => onTabTapped(0),
           ),
+          // Explore Button (Index 1)
           IconButton(
             icon: Icon(
               Icons.search,
@@ -34,20 +36,23 @@ class CustomBottomBar extends StatelessWidget {
             ),
             onPressed: () => onTabTapped(1),
           ),
-          SizedBox(width: 40), // Empty space
+          // Empty space for the FAB
+          const SizedBox(width: 40),
+          // Notifications Button (Index 2)
           IconButton(
             icon: Icon(
               Icons.notifications,
-              color: currentIndex == 3 ? AppColors.primary : AppColors.white,
+              color: currentIndex == 2 ? AppColors.primary : AppColors.white,
             ),
-            onPressed: () => onTabTapped(3),
+            onPressed: () => onTabTapped(2),
           ),
+          // Profile Button (Index 3)
           IconButton(
             icon: Icon(
               Icons.person,
-              color: currentIndex == 4 ? AppColors.primary : AppColors.white,
+              color: currentIndex == 3 ? AppColors.primary : AppColors.white,
             ),
-            onPressed: () => onTabTapped(4),
+            onPressed: () => onTabTapped(3),
           ),
         ],
       ),

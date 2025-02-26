@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:rekord/screens/profile_screen.dart';
+import 'package:rekord/screens/explore_screen.dart';
+import 'package:rekord/screens/notification_screen.dart';
 import 'package:rekord/widgets/bottom_bar.dart';
 import '../utils/colors.dart';
 import 'dart:io';
@@ -26,12 +29,12 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
     _screens = [
       AthleteHomeContent(
         userData: widget.userData,
-        postSection: PostSection(key: GlobalKey<PostSectionState>(), state: _postSectionState),
+        postSection: PostSection(
+            key: GlobalKey<PostSectionState>(), state: _postSectionState),
       ),
-      SearchScreen(),
-      Container(), // Placeholder for the "+" button (no screen)
-      NotificationsScreen(),
-      ProfileScreen(),
+      SearchScreen(), // Explore Screen
+      NotificationsScreen(), // Notification Screen
+      ProfilePage(), // Profile Screen
     ];
   }
 
@@ -53,15 +56,10 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
   }
 
   void _onTabTapped(int index) {
-    if (index == 2) {
-      // If center tab is tapped (index 2), open create post screen
-      _openCreatePostScreen();
-    } else {
-      setState(() {
-        _currentIndex = index;
-      });
-    }
-  }
+  setState(() {
+    _currentIndex = index;
+  });
+}
 
   void _logout() {
     // Navigate back to login screen
@@ -74,27 +72,9 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
       key: _scaffoldKey,
       backgroundColor: AppColors.black,
       endDrawer: _buildSideDrawer(),
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset('assets/logo.avif', height: 40),
-        ),
-        title: Text('Rekord', style: TextStyle(fontSize: 26, color: Colors.white)),
-        actions: [
-          GestureDetector(
-            onTap: _openDrawer,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundImage: AssetImage('assets/logo.avif'),
-              ),
-            ),
-          ),
-        ],
-      ),
+      appBar: _currentIndex != 4
+          ? _buildAppBar()
+          : null, // Hide AppBar on Profile page
       body: _screens[_currentIndex],
       bottomNavigationBar: CustomBottomBar(
         currentIndex: _currentIndex,
@@ -106,6 +86,31 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
         child: Icon(Icons.add, color: AppColors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.black,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Image.asset('assets/logo.avif', height: 40),
+      ),
+      title:
+          Text('Rekord', style: TextStyle(fontSize: 26, color: Colors.white)),
+      actions: [
+        GestureDetector(
+          onTap: _openDrawer,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: AssetImage('assets/logo.avif'),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -169,6 +174,9 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
     );
   }
 }
+
+// Rest of your code remains the same...
+// AthleteHomeContent, CreatePostScreen, PostSection, etc.
 
 // Athlete Home Content
 class AthleteHomeContent extends StatelessWidget {
@@ -253,7 +261,7 @@ class AthleteHomeContent extends StatelessWidget {
           ),
 
           SizedBox(height: 12),
-          
+
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Container(
@@ -294,7 +302,7 @@ class AthleteHomeContent extends StatelessWidget {
           ),
 
           SizedBox(height: 24),
-          
+
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
@@ -307,9 +315,9 @@ class AthleteHomeContent extends StatelessWidget {
               ),
             ),
           ),
-          
+
           SizedBox(height: 8),
-          
+
           // Post Section - Remove fixed height constraint
           postSection,
         ],
@@ -375,7 +383,8 @@ class AthleteHomeContent extends StatelessWidget {
 class CreatePostScreen extends StatefulWidget {
   final Function(String text, String? imagePath) onPostCreated;
 
-  const CreatePostScreen({Key? key, required this.onPostCreated}) : super(key: key);
+  const CreatePostScreen({Key? key, required this.onPostCreated})
+      : super(key: key);
 
   @override
   _CreatePostScreenState createState() => _CreatePostScreenState();
@@ -558,13 +567,15 @@ class PostSectionState extends State<PostSection> {
       "isAsset": true,
     },
     {
-      "text": "Preparing for the big championship next week! 💪 #Championship #Training",
+      "text":
+          "Preparing for the big championship next week! 💪 #Championship #Training",
       "image": "assets/post5.png",
       "time": DateTime.now().subtract(Duration(days: 2)),
       "isAsset": true,
     },
     {
-      "text": "Thank you to all my fans for the support! You make this journey worth it. ❤️ #Grateful",
+      "text":
+          "Thank you to all my fans for the support! You make this journey worth it. ❤️ #Grateful",
       "image": null,
       "time": DateTime.now().subtract(Duration(days: 3)),
       "isAsset": true,
@@ -624,7 +635,8 @@ class PostSectionState extends State<PostSection> {
               // Post Text
               if (post["text"] != null && post["text"].isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   child: Text(
                     post["text"],
                     style: TextStyle(color: AppColors.white, fontSize: 15),
@@ -722,18 +734,6 @@ class NotificationsScreen extends StatelessWidget {
     return Center(
       child: Text(
         "Notifications Screen",
-        style: TextStyle(color: Colors.white, fontSize: 18),
-      ),
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        "Profile Screen",
         style: TextStyle(color: Colors.white, fontSize: 18),
       ),
     );

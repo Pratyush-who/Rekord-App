@@ -32,7 +32,7 @@ class _FanHomeScreenState extends State<FanHomeScreen> {
       SearchScreen(),
       Container(), // Placeholder for the "+" button (no screen)
       NotificationsScreen(),
-      ProfileScreen(),
+      ProfilePage(),
     ];
   }
 

@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:path/path.dart' as path;
+import 'package:async/async.dart';
 
 enum UserType { athlete, regularUser }
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
-
   @override
   _SignupScreenState createState() => _SignupScreenState();
 }
@@ -16,7 +19,6 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   // Current user type
   UserType _userType = UserType.athlete;
-
   // Form controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -28,10 +30,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _careerController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _interestsController = TextEditingController();
-
   DateTime? _selectedDate;
   File? _profileImage;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   // Colors
   final Color primaryRed = const Color(0xFFEE3124);
@@ -58,7 +60,6 @@ class _SignupScreenState extends State<SignupScreen> {
         );
       },
     );
-
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -69,7 +70,6 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
     if (image != null) {
       setState(() {
         _profileImage = File(image.path);
@@ -77,48 +77,109 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _signup(BuildContext context) {
+  Future<void> _signup(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Base data for both user types
-      final Map<String, dynamic> userData = {
-        'email': _emailController.text,
-        'username': _usernameController.text,
-        'name': _nameController.text,
-        'password': _passwordController.text,
-        'phone': _phoneController.text,
-        'dateOfBirth': _selectedDate != null
+      // Set loading state
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // API endpoint
+        final Uri url = Uri.parse('http://192.168.1.61:3000/api/createAthlete');
+        
+        // Create a multipart request
+        var request = http.MultipartRequest('POST', url);
+        
+        // Add text fields
+        request.fields['email'] = _emailController.text;
+        request.fields['username'] = _usernameController.text;
+        request.fields['name'] = _nameController.text;
+        request.fields['password'] = _passwordController.text;
+        request.fields['phone'] = _phoneController.text;
+        request.fields['dateOfBirth'] = _selectedDate != null
             ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
-            : null,
-        'nationality': _nationalityController.text,
-        'location': _locationController.text,
-        'profileImage': _profileImage?.path ?? '',
-        'userType': _userType == UserType.athlete ? 'athlete' : 'user',
-      };
-
-      // Add athlete-specific or user-specific data
-      if (_userType == UserType.athlete) {
-        userData.addAll({
-          'career': _careerController.text,
-          'bio': _bioController.text,
-          'stats': {'totalMatches': 0, 'achievements': [], 'rankings': []}
+            : '';
+        request.fields['nationality'] = _nationalityController.text;
+        request.fields['location'] = _locationController.text;
+        request.fields['userType'] = _userType == UserType.athlete ? 'athlete' : 'user';
+        
+        // Add athlete-specific or user-specific data
+        if (_userType == UserType.athlete) {
+          request.fields['career'] = _careerController.text;
+          request.fields['bio'] = _bioController.text;
+          
+          // Add stats as JSON
+          final stats = {
+            'totalMatches': 0,
+            'achievements': [],
+            'rankings': []
+          };
+          request.fields['stats'] = jsonEncode(stats);
+        } else {
+          request.fields['interests'] = _interestsController.text;
+          request.fields['bio'] = _bioController.text;
+          // Other user-specific fields can be added here
+        }
+        
+        // Add profile image if selected
+        if (_profileImage != null) {
+          var stream = http.ByteStream(DelegatingStream.typed(_profileImage!.openRead()));
+          var length = await _profileImage!.length();
+          var multipartFile = http.MultipartFile(
+            'profileImage',
+            stream,
+            length,
+            filename: path.basename(_profileImage!.path)
+          );
+          request.files.add(multipartFile);
+        }
+        
+        // Send the request
+        var response = await request.send();
+        
+        // Process the response
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          var responseData = await response.stream.bytesToString();
+          print('Signup successful: $responseData');
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Account created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navigate based on user type
+          if (_userType == UserType.athlete) {
+            Navigator.pushReplacementNamed(context, '/athlete_home',
+                arguments: {'userType': 'athlete'});
+          } else {
+            Navigator.pushReplacementNamed(context, '/fan_home',
+                arguments: {'userType': 'user'});
+          }
+        } else {
+          print('Error during signup: ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to create account. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        print('Exception during signup: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred. Please try again later.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        // Reset loading state
+        setState(() {
+          _isLoading = false;
         });
-      } else {
-        userData.addAll({
-          'interests': _interestsController.text,
-          'bio': _bioController.text,
-          'following': [],
-          'favoriteAthletes': []
-        });
-      }
-
-      print('Submitting data: $userData');
-
-      if (_userType == UserType.athlete) {
-        Navigator.pushReplacementNamed(context, '/athlete_home',
-            arguments: {'userType': 'athlete'});
-      } else {
-        Navigator.pushReplacementNamed(context, '/fan_home',
-            arguments: {'userType': 'user'});
       }
     }
   }
@@ -167,7 +228,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     // User Type Selector
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 16.0),
@@ -260,7 +320,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         ],
                       ),
                     ),
-
                     Text(
                       _userType == UserType.athlete
                           ? "Create Your Athlete Profile"
@@ -272,7 +331,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     // Profile Image Picker
                     Center(
                       child: GestureDetector(
@@ -311,25 +369,45 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     // Personal Information Section
                     _buildSectionTitle("Personal Information"),
                     _buildTextField(
                       controller: _nameController,
                       label: "Full Name",
                       icon: Icons.person,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _usernameController,
                       label: "Username",
                       icon: Icons.alternate_email,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a username';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _emailController,
                       label: "Email",
                       icon: Icons.email,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          return 'Please enter a valid email address';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -337,14 +415,22 @@ class _SignupScreenState extends State<SignupScreen> {
                       label: "Password",
                       icon: Icons.lock,
                       isPassword: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a password';
+                        } else if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _phoneController,
                       label: "Phone Number",
                       icon: Icons.phone,
+                      keyboardType: TextInputType.phone,
                     ),
-
                     const SizedBox(height: 16),
                     // Date of Birth Field
                     GestureDetector(
@@ -380,12 +466,16 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ? DateFormat('dd/MM/yyyy')
                                       .format(_selectedDate!)
                                   : ''),
+                          validator: (value) {
+                            if (_selectedDate == null) {
+                              return 'Please select your date of birth';
+                            }
+                            return null;
+                          },
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     // Location Information Section
                     _buildSectionTitle("Location Information"),
                     _buildTextField(
@@ -399,9 +489,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       label: "Current Location",
                       icon: Icons.location_on,
                     ),
-
                     const SizedBox(height: 24),
-
                     // Athlete-specific fields
                     if (_userType == UserType.athlete) ...[
                       _buildSectionTitle("Professional Information"),
@@ -418,7 +506,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         maxLines: 3,
                       ),
                     ],
-
                     // User-specific fields
                     if (_userType == UserType.regularUser) ...[
                       _buildSectionTitle("Fan Information"),
@@ -435,12 +522,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         maxLines: 3,
                       ),
                     ],
-
                     const SizedBox(height: 32),
-
                     // Sign Up Button
                     ElevatedButton(
-                      onPressed: () => _signup(context),
+                      onPressed: _isLoading ? null : () => _signup(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryRed,
                         foregroundColor: Colors.white,
@@ -450,18 +535,19 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         elevation: 5,
                       ),
-                      child: Text(
-                        _userType == UserType.athlete
-                            ? "CREATE ATHLETE ACCOUNT"
-                            : "CREATE FAN ACCOUNT",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              _userType == UserType.athlete
+                                  ? "CREATE ATHLETE ACCOUNT"
+                                  : "CREATE FAN ACCOUNT",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
                     ),
-
                     const SizedBox(height: 16),
                     // Login Link
                     TextButton(
